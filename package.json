@@ -1,0 +1,14 @@
+{
+  "name": "realworld-starter-kit",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:masaeedu/realworld-starter-kit.git",
+  "license": "MIT",
+  "devDependencies": {
+    "parcel": "^1.12.4"
+  },
+  "scripts": {
+    "dev": "parcel static/index.html",
+    "build:watch": "spago bundle-app --to static/js/app.js --watch"
+  }
+}
