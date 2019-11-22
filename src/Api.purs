@@ -24,7 +24,7 @@ import Data.Symbol (class IsSymbol, SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Foreign (MultipleErrors)
-import Model (CreateArticle, Article, Comment, Profile, Token, User)
+import Model (CreateArticle, Article, Comment, Profile, Token, User, UpdateUser)
 import Prim.Row as Row
 import Record as Record
 import Record.ToMap (rlToMap)
@@ -39,7 +39,6 @@ data ApiError = AffjaxError AX.Error | ParseError MultipleErrors
 instance showApiError :: Show ApiError where
   show (AffjaxError e) = AX.printError e
   show (ParseError e) = show e
-
 
 request :: forall m a
          . MonadAff m
@@ -71,6 +70,18 @@ defaultAuthReq token = AX.defaultRequest
   { headers = [ RequestHeader "Token" (unwrap token) ]
   }
 
+parseAuthMethod :: forall m r a
+                 . MonadAsk { apiUrl :: Url | r } m
+                => MonadAff m
+                => Either Method CustomMethod
+                -> Maybe Token
+                -> String
+                -> Maybe RequestBody
+                -> (String -> Either ApiError a)
+                -> m (Either ApiError a)
+parseAuthMethod method mt endpoint body parser =
+  map (_ >>= parser <<< _.body) $ authReq method body mt ResponseFormat.string endpoint
+
 parseAuthGet :: forall m r a
               . MonadAsk { apiUrl :: Url | r } m
              => MonadAff m
@@ -78,8 +89,7 @@ parseAuthGet :: forall m r a
              -> String
              -> (String -> Either ApiError a)
              -> m (Either ApiError a)
-parseAuthGet mt endpoint parser = 
-  map (_ >>= parser <<< _.body) $ authReq (Left GET) Nothing mt ResponseFormat.string endpoint
+parseAuthGet t s p = parseAuthMethod (Left GET) t s Nothing p
 
 parseGet :: forall m r a
           . MonadAsk { apiUrl :: Url | r } m
@@ -97,8 +107,7 @@ parseAuthPost :: forall m r a
               -> Maybe RequestBody
               -> (String -> Either ApiError a)
               -> m (Either ApiError a)
-parseAuthPost mt endpoint body parser =
-  map (_ >>= parser <<< _.body) $ authReq (Left POST) body mt ResponseFormat.string endpoint
+parseAuthPost = parseAuthMethod $ Left POST
 
 parsePost :: forall m r a
            . MonadAsk { apiUrl :: Url | r } m
@@ -108,6 +117,16 @@ parsePost :: forall m r a
           -> (String -> Either ApiError a)
           -> m (Either ApiError a)
 parsePost = parseAuthPost Nothing
+
+parseAuthPut :: forall m r a
+              . MonadAsk { apiUrl :: Url | r } m
+             => MonadAff m
+             => Maybe Token
+             -> String
+             -> Maybe RequestBody
+             -> (String -> Either ApiError a)
+             -> m (Either ApiError a)
+parseAuthPut = parseAuthMethod $ Left PUT
 
 getCurrentUser :: forall m r
                 . MonadAsk { apiUrl :: Url | r } m
@@ -259,6 +278,19 @@ postComment token slug comment =
     ("/articles/" <> slug <> "/comments")
     (Just $ mkJsonBody { comment })
     (readJson' _comment)
+
+putUser :: forall m r
+         . MonadAsk { apiUrl :: Url | r } m
+        => MonadAff m
+        => Token
+        -> UpdateUser
+        -> m (Either ApiError User)
+putUser token user =
+  parseAuthPut
+    (Just token)
+    "/user"
+    (Just $ mkJsonBody { user })
+    (readJson' _user)
 
 buildQuery :: Map String String -> String -> String
 buildQuery params url | Map.isEmpty params = url

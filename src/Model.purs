@@ -68,10 +68,15 @@ type Profile =
   , following :: Boolean
   }
 
-type User =
+type BaseUser r =
   { email :: String
-  , token :: String
   , username :: String
   , bio :: String
   , image :: String
+  | r
   }
+
+type UpdateUser = BaseUser (password :: Maybe String)
+
+type User = BaseUser (token :: String)
+  
