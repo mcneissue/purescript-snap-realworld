@@ -207,7 +207,18 @@ postLogin login =
   parsePost
     "/users/login"
     (Just $ mkJsonBody { user: login })
-    (readJson' (SProxy :: SProxy "user"))
+    (readJson' _user)
+
+postRegister :: forall m r
+              . MonadAsk { apiUrl :: Url | r } m
+             => MonadAff m
+             => { username :: String, email :: String, password :: String }
+             -> m (Either ApiError User)
+postRegister register =
+  parsePost
+    "/users"
+    (Just $ mkJsonBody { user: register })
+    (readJson' _user)
 
 buildQuery :: Map String String -> String -> String
 buildQuery params url | Map.isEmpty params = url
@@ -228,6 +239,9 @@ readJson' _ s = bimap ParseError (Record.get (SProxy :: SProxy l)) $ (JSON.readJ
 
 mkJsonBody :: forall a. JSON.WriteForeign a => a -> RequestBody
 mkJsonBody = RequestBody.string <<< JSON.writeJSON
+
+_user :: SProxy "user"
+_user = SProxy
 
 _articles :: SProxy "articles"
 _articles = SProxy
