@@ -3,6 +3,8 @@ module Api where
 import Prelude
 
 import Affjax as AX
+import Affjax.RequestBody (RequestBody)
+import Affjax.RequestBody as RequestBody
 import Affjax.RequestHeader (RequestHeader(..))
 import Affjax.ResponseFormat (ResponseFormat)
 import Affjax.ResponseFormat as ResponseFormat
@@ -11,10 +13,9 @@ import Data.Bifunctor (bimap, lmap)
 import Data.Either (Either(..))
 import Data.Filterable (compact)
 import Data.FoldableWithIndex (foldMapWithIndex)
-import Data.HTTP.Method (Method(..))
+import Data.HTTP.Method (CustomMethod, Method(..))
 import Data.Lens.Record (prop)
 import Data.Lens.Setter ((%~))
-import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
@@ -22,7 +23,7 @@ import Data.Newtype (class Newtype, unwrap)
 import Data.Symbol (class IsSymbol, SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff.Class (class MonadAff, liftAff)
-import Foreign (ForeignError, MultipleErrors)
+import Foreign (MultipleErrors)
 import Model (Article, Comment, Profile, Token, User)
 import Prim.Row as Row
 import Record as Record
@@ -46,25 +47,24 @@ request :: forall m a
         -> m (Either ApiError (AX.Response a))
 request = map (lmap AffjaxError) <<< liftAff <<< AX.request
 
-authGet :: forall m r a
+authReq :: forall m r a
          . MonadAsk { apiUrl :: Url | r } m
         => MonadAff m
-        => Maybe Token
+        => Either Method CustomMethod
+        -> Maybe RequestBody
+        -> Maybe Token
         -> ResponseFormat a
         -> String
         -> m (Either ApiError (AX.Response a))
-authGet mt rf url = do
+authReq method mcontent mt rf url = do
   root <- asks (_.apiUrl >>> unwrap)
   let req = maybe AX.defaultRequest defaultAuthReq mt
-  request $ req { url = root <> url, responseFormat = rf, method = Left GET }
-
-get :: forall m r a
-     . MonadAsk { apiUrl :: Url | r } m 
-    => MonadAff m 
-    => ResponseFormat a 
-    -> String 
-    -> m (Either ApiError (AX.Response a))
-get = authGet Nothing
+  request $ req 
+    { url = root <> url
+    , responseFormat = rf
+    , method = method
+    , content = mcontent 
+    }
 
 defaultAuthReq :: Token -> AX.Request Unit
 defaultAuthReq token = AX.defaultRequest 
@@ -79,7 +79,7 @@ parseAuthGet :: forall m r a
              -> (String -> Either ApiError a)
              -> m (Either ApiError a)
 parseAuthGet mt endpoint parser = 
-  map (_ >>= parser <<< _.body) $ authGet mt ResponseFormat.string endpoint
+  map (_ >>= parser <<< _.body) $ authReq (Left GET) Nothing mt ResponseFormat.string endpoint
 
 parseGet :: forall m r a
           . MonadAsk { apiUrl :: Url | r } m
@@ -88,6 +88,26 @@ parseGet :: forall m r a
          -> (String -> Either ApiError a)
          -> m (Either ApiError a)
 parseGet = parseAuthGet Nothing
+
+parseAuthPost :: forall m r a
+               . MonadAsk { apiUrl :: Url | r } m
+              => MonadAff m
+              => Maybe Token
+              -> String
+              -> Maybe RequestBody
+              -> (String -> Either ApiError a)
+              -> m (Either ApiError a)
+parseAuthPost mt endpoint body parser =
+  map (_ >>= parser <<< _.body) $ authReq (Left POST) body mt ResponseFormat.string endpoint
+
+parsePost :: forall m r a
+           . MonadAsk { apiUrl :: Url | r } m
+          => MonadAff m
+          => String
+          -> Maybe RequestBody
+          -> (String -> Either ApiError a)
+          -> m (Either ApiError a)
+parsePost = parseAuthPost Nothing
 
 getCurrentUser :: forall m r
                 . MonadAsk { apiUrl :: Url | r } m
@@ -178,6 +198,17 @@ getTags =
     "/tags" 
     (readJson' (SProxy :: SProxy "tags"))
 
+postLogin :: forall m r
+           . MonadAsk { apiUrl :: Url | r } m
+          => MonadAff m
+          => { username :: String, password :: String }
+          -> m (Either ApiError User)
+postLogin login =
+  parsePost
+    "/users/login"
+    (Just $ mkJsonBody { user: login })
+    (readJson' (SProxy :: SProxy "user"))
+
 buildQuery :: Map String String -> String -> String
 buildQuery params url | Map.isEmpty params = url
                       | otherwise = url <> "?" <> foldMapWithIndex go unfolded
@@ -194,6 +225,9 @@ readJson = lmap ParseError <<< JSON.readJSON
 -- Helper for unwrapping responses like { foo :: Foo }
 readJson' :: forall l r a. JSON.ReadForeign a => JSON.ReadForeign (Record r) => IsSymbol l => Row.Cons l a () r => SProxy l -> String -> Either ApiError a
 readJson' _ s = bimap ParseError (Record.get (SProxy :: SProxy l)) $ (JSON.readJSON s :: Either MultipleErrors (Record r))
+
+mkJsonBody :: forall a. JSON.WriteForeign a => a -> RequestBody
+mkJsonBody = RequestBody.string <<< JSON.writeJSON
 
 _articles :: SProxy "articles"
 _articles = SProxy
