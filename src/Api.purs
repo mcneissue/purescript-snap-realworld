@@ -177,7 +177,7 @@ getProfile :: forall m r
 getProfile username = 
   parseGet 
     ("/profiles/" <> username) 
-    (readJson' (SProxy :: SProxy "profile"))
+    (readJson' _profile)
 
 getComments :: forall m r
              . MonadAsk { apiUrl :: Url | r } m
@@ -220,6 +220,19 @@ postRegister register =
     (Just $ mkJsonBody { user: register })
     (readJson' _user)
 
+postFollow :: forall m r
+            . MonadAsk { apiUrl :: Url | r } m
+           => MonadAff m
+           => Token
+           -> String
+           -> m (Either ApiError Profile)
+postFollow token username =
+  parseAuthPost
+    (Just token)
+    ("/profiles/" <> username <> "/follow")
+    Nothing
+    (readJson' _profile)
+
 buildQuery :: Map String String -> String -> String
 buildQuery params url | Map.isEmpty params = url
                       | otherwise = url <> "?" <> foldMapWithIndex go unfolded
@@ -242,6 +255,9 @@ mkJsonBody = RequestBody.string <<< JSON.writeJSON
 
 _user :: SProxy "user"
 _user = SProxy
+
+_profile :: SProxy "profile"
+_profile = SProxy
 
 _articles :: SProxy "articles"
 _articles = SProxy
