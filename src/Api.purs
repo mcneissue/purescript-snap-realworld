@@ -8,21 +8,20 @@ import Affjax.ResponseFormat as ResponseFormat
 import Control.Monad.Reader.Class (class MonadAsk, asks)
 import Data.Bifunctor (lmap)
 import Data.Either (Either)
-import Data.Filterable (compact, filter)
-import Data.FoldableWithIndex (foldMapWithIndex, foldlWithIndex)
+import Data.Filterable (compact)
+import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Lens.Record (prop)
 import Data.Lens.Setter ((%~))
-import Data.List (List(..), catMaybes, fromFoldable, intercalate, (:))
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype, unwrap)
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Foreign (ForeignError)
-import Model (Article)
+import Model (Article, Profile, Comment)
 import Record.ToMap (rlToMap)
 import Simple.JSON as JSON
 
@@ -67,15 +66,48 @@ getArticles :: forall m r
            => MonadAff m 
            => GetArticlesParams
            -> m (Either ApiError (Array Article))
-getArticles p = parseGet (buildQuery paramList "/articles") (map _.articles <<< articlesParser)
+getArticles p = parseGet (buildQuery paramList "/articles") (map _.articles <<< parseArticles)
   where
   paramList = compact $ rlToMap $ p # _limit %~ map show
                                     # _offset %~ map show
   _limit = prop (SProxy :: SProxy "limit")
   _offset = prop (SProxy :: SProxy "offset")
 
-articlesParser :: String -> Either ApiError { articles :: Array Article }
-articlesParser = readJson
+  parseArticles :: String -> Either ApiError { articles :: Array Article }
+  parseArticles = readJson
+
+getArticle :: forall m r
+            . MonadAsk { apiUrl :: Url | r } m
+           => MonadAff m
+           => String
+           -> m (Either ApiError Article)
+getArticle slug = parseGet ("/article/" <> slug) readJson
+
+getProfile :: forall m r
+            . MonadAsk { apiUrl :: Url | r } m
+           => MonadAff m
+           => String
+           -> m (Either ApiError Profile)
+getProfile username = parseGet ("/profiles/" <> username) readJson
+
+getComments :: forall m r
+             . MonadAsk { apiUrl :: Url | r } m
+            => MonadAff m
+            => String
+            -> m (Either ApiError (Array Comment))
+getComments slug = parseGet ("/articles/" <> slug <> "/comments") (map _.comments <<< parseComments)
+  where
+  parseComments :: String -> Either ApiError { comments :: Array Comment }
+  parseComments = readJson
+
+getTags :: forall m r
+         . MonadAsk { apiUrl :: Url | r } m
+        => MonadAff m
+        => m (Either ApiError (Array String))
+getTags = parseGet "/tags" (map _.tags <<< parseTags)
+  where
+  parseTags :: String -> Either ApiError { tags :: Array String }
+  parseTags = readJson
 
 buildQuery :: Map String String -> String -> String
 buildQuery params url | Map.isEmpty params = url

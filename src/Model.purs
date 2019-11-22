@@ -30,6 +30,10 @@ instance readForeignDateTime :: ReadForeign DateTime where
 maybeThrow :: forall e m a. Monad m => e -> Maybe a -> ExceptT e m a
 maybeThrow e = maybe (throwError e) pure
 
+newtype Token = Token String
+
+derive instance newtypeToken :: Newtype Token _
+
 type Article =
   { slug :: String
   , title :: String
@@ -48,7 +52,7 @@ type Comment =
   , createdAt :: DateTime
   , updatedAt :: DateTime
   , body :: String
-  , author :: User
+  , author :: Profile
   }
 
 type Profile = 
