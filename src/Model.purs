@@ -34,18 +34,24 @@ newtype Token = Token String
 
 derive instance newtypeToken :: Newtype Token _
 
-type Article =
-  { slug :: String
-  , title :: String
+type BaseArticle r = 
+  { title :: String
   , description :: String
   , body :: String
   , tagList :: Array String
+  | r
+  }
+
+type CreateArticle = BaseArticle ()
+
+type Article = BaseArticle 
+  ( slug :: String
   , createdAt :: DateTime
   , updatedAt :: DateTime
   , favorited :: Boolean
   , favoritesCount :: Int
   , author :: Profile
-  }
+  )
 
 type Comment =
   { id :: Int

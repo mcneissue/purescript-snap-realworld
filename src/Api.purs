@@ -24,7 +24,7 @@ import Data.Symbol (class IsSymbol, SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Foreign (MultipleErrors)
-import Model (Article, Comment, Profile, Token, User)
+import Model (CreateArticle, Article, Comment, Profile, Token, User)
 import Prim.Row as Row
 import Record as Record
 import Record.ToMap (rlToMap)
@@ -167,7 +167,7 @@ getArticle :: forall m r
 getArticle slug = 
   parseGet 
     ("/article/" <> slug) 
-    (readJson' (SProxy :: SProxy "article"))
+    (readJson' _article)
 
 getProfile :: forall m r
             . MonadAsk { apiUrl :: Url | r } m
@@ -233,6 +233,33 @@ postFollow token username =
     Nothing
     (readJson' _profile)
 
+postArticle :: forall m r
+             . MonadAsk { apiUrl :: Url | r } m
+            => MonadAff m
+            => Token
+            -> CreateArticle
+            -> m (Either ApiError Article)
+postArticle token article =
+  parseAuthPost
+    (Just token)
+    "/articles"
+    (Just $ mkJsonBody { article })
+    (readJson' _article)
+
+postComment :: forall m r
+             . MonadAsk { apiUrl :: Url | r } m
+            => MonadAff m
+            => Token
+            -> String
+            -> { body :: String }
+            -> m (Either ApiError Comment)
+postComment token slug comment =
+  parseAuthPost
+    (Just token)
+    ("/articles/" <> slug <> "/comments")
+    (Just $ mkJsonBody { comment })
+    (readJson' _comment)
+
 buildQuery :: Map String String -> String -> String
 buildQuery params url | Map.isEmpty params = url
                       | otherwise = url <> "?" <> foldMapWithIndex go unfolded
@@ -262,8 +289,14 @@ _profile = SProxy
 _articles :: SProxy "articles"
 _articles = SProxy
 
+_article :: SProxy "article"
+_article = SProxy
+
 _limit :: SProxy "limit"
 _limit = SProxy
 
 _offset :: SProxy "offset"
 _offset = SProxy
+
+_comment :: SProxy "comment"
+_comment = SProxy
