@@ -1,7 +1,34 @@
 module Model where
 
 import Prelude
-import Data.DateTime (DateTime)
+
+import Control.Monad.Except (ExceptT, throwError)
+import Data.DateTime (DateTime) as DT
+import Data.DateTime.Instant (instant, toDateTime)
+import Data.Maybe (Maybe, maybe)
+import Data.Newtype (class Newtype, wrap)
+import Data.Time.Duration (Milliseconds(..))
+import Foreign (ForeignError(..), readString)
+import Simple.JSON (class ReadForeign)
+
+foreign import parseDateMs :: String -> Number
+
+newtype DateTime = DateTime DT.DateTime
+
+derive instance newtypeDateTime :: Newtype DateTime _
+derive newtype instance showDateTime :: Show DateTime
+
+instance readForeignDateTime :: ReadForeign DateTime where
+  readImpl t = go >>= maybeThrow (pure $ ForeignError "instant failed to parse Milliseconds")
+    where 
+    go = map (wrap <<< toDateTime) 
+      <<< instant 
+      <<< Milliseconds 
+      <<< parseDateMs 
+      <$> readString t
+
+maybeThrow :: forall e m a. Monad m => e -> Maybe a -> ExceptT e m a
+maybeThrow e = maybe (throwError e) pure
 
 type Article =
   { slug :: String
@@ -13,7 +40,7 @@ type Article =
   , updatedAt :: DateTime
   , favorited :: Boolean
   , favoritesCount :: Int
-  , author :: User
+  , author :: Profile
   }
 
 type Comment =
@@ -26,7 +53,7 @@ type Comment =
 
 type Profile = 
   { username :: String
-  , bio :: String
+  , bio :: Maybe String
   , image :: String
   , following :: Boolean
   }
