@@ -24,7 +24,7 @@ import Data.Symbol (class IsSymbol, SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Foreign (MultipleErrors)
-import Model (CreateArticle, Article, Comment, Profile, Token, User, UpdateUser)
+import Model (CreateArticle, Article, Comment, Profile, Token, User, UpdateUser, UpdateArticle)
 import Prim.Row as Row
 import Record as Record
 import Record.ToMap (rlToMap)
@@ -291,6 +291,20 @@ putUser token user =
     "/user"
     (Just $ mkJsonBody { user })
     (readJson' _user)
+
+putArticle :: forall m r
+            . MonadAsk { apiUrl :: Url | r } m
+           => MonadAff m
+           => Token
+           -> String
+           -> UpdateArticle
+           -> m (Either ApiError User)
+putArticle token slug article =
+  parseAuthPut
+    (Just token)
+    ("/articles/" <> slug)
+    (Just $ mkJsonBody { article })
+    (readJson' _article)
 
 buildQuery :: Map String String -> String -> String
 buildQuery params url | Map.isEmpty params = url

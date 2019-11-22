@@ -43,6 +43,7 @@ type BaseArticle r =
   }
 
 type CreateArticle = BaseArticle ()
+type UpdateArticle = BaseArticle ()
 
 type Article = BaseArticle 
   ( slug :: String
