@@ -15,7 +15,7 @@ import Test.Api (cleanupServer, readConfig, startServer, testGetArticles, runTes
 main :: Effect Unit
 main = launchAff_ do
   cfg <- readConfig
-  er <- runTestM (startServer >>= \s -> (liftAff $ delay (Milliseconds 1000.0)) *> void testGetArticles *> cleanupServer s) cfg
+  er <- runTestM (startServer >>= \s -> testGetArticles *> cleanupServer s) cfg
   case er of
     Right _ -> pure unit
     Left e -> liftEffect $ logShow e

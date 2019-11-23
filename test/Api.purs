@@ -4,7 +4,7 @@ import Prelude
 
 import Api as Api
 import Api.Types (ApiError, Url(..))
-import Control.Monad.Except (ExceptT(..), except, throwError, runExceptT)
+import Control.Monad.Except (ExceptT(..), catchError, except, runExceptT, throwError)
 import Control.Monad.Reader (ReaderT(..), runReaderT, asks)
 import Data.Either (Either(..), either, fromRight)
 import Data.Foldable (foldMap)
@@ -12,7 +12,8 @@ import Data.Maybe (Maybe(..))
 import Data.Posix.Signal (Signal(..))
 import Data.Posix.Signal as Signal
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, Milliseconds(..), delay)
+import Effect.Aff.Class (liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console (log, logShow)
 import Foreign (MultipleErrors)
@@ -52,7 +53,19 @@ startServer = do
   cmd <- asks _.startServer
   vs  <- asks _.envVars
   wd  <- asks _.workingDir
-  spawnCmd wd vs cmd
+  cp  <- spawnCmd wd vs cmd
+  awaitServer 20
+  pure cp
+
+awaitServer :: Int -> TestM Unit
+awaitServer retry = do
+  liftEffect $ log $ "Waiting for test server.  Attempts remaining: " <> show (retry - 1)
+  liftAff $ delay (Milliseconds 100.0)
+  void testGetArticles `catchError` 
+    \e -> if retry >= 0 
+            then awaitServer (retry - 1) 
+            else throwError e
+  liftEffect $ log "Test server started.  Running tests..."
 
 cleanupServer :: ChildProcess -> TestM Unit
 cleanupServer cp = do
@@ -82,7 +95,6 @@ login creds = liftE $ Api.postLogin creds
 testGetArticles :: TestM (Array Article)
 testGetArticles = do
   as <- liftE $ Api.getArticles Api.defaultGetArticlesParams
-  liftEffect $ logShow as
   pure as
 
 register :: TestM User
