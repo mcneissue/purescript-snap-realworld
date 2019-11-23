@@ -217,6 +217,19 @@ getComments slug =
     ("/articles/" <> slug <> "/comments") 
     (readJson' (SProxy :: SProxy "comments"))
 
+deleteComment :: forall m r
+               . MonadAsk { apiUrl :: Url | r } m
+              => MonadAff m
+              => Token
+              -> String
+              -> Int
+              -> m (Either ApiError Unit)
+deleteComment token slug id =
+  parseAuthDelete
+    (Just token)
+    ("/articles/" <> slug <> "/comments/" <> show id)
+    (const $ Right unit)
+
 getTags :: forall m r
          . MonadAsk { apiUrl :: Url | r } m
         => MonadAff m
