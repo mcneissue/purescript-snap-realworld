@@ -128,6 +128,15 @@ parseAuthPut :: forall m r a
              -> m (Either ApiError a)
 parseAuthPut = parseAuthMethod $ Left PUT
 
+parseAuthDelete :: forall m r a
+                 . MonadAsk { apiUrl :: Url | r } m
+                => MonadAff m
+                => Maybe Token
+                -> String
+                -> (String -> Either ApiError a)
+                -> m (Either ApiError a)
+parseAuthDelete t s p = parseAuthMethod (Left DELETE) t s Nothing p
+
 getCurrentUser :: forall m r
                 . MonadAsk { apiUrl :: Url | r } m
                => MonadAff m
@@ -263,6 +272,31 @@ postArticle token article =
     (Just token)
     "/articles"
     (Just $ mkJsonBody { article })
+    (readJson' _article)
+
+postFavoriteArticle :: forall m r
+                     . MonadAsk { apiUrl :: Url | r } m
+                    => MonadAff m
+                    => Token
+                    -> String
+                    -> m (Either ApiError Article)
+postFavoriteArticle token slug =
+  parseAuthPost
+    (Just token)
+    ("/articles/" <> slug <> "/favorite")
+    Nothing
+    (readJson' _article)
+
+deleteFavoriteArticle :: forall m r
+                       . MonadAsk { apiUrl :: Url | r } m
+                      => MonadAff m
+                      => Token
+                      -> String
+                      -> m (Either ApiError Article)
+deleteFavoriteArticle token slug =
+  parseAuthDelete
+    (Just token)
+    ("/articles/" <> slug <> "/favorite")
     (readJson' _article)
 
 postComment :: forall m r
