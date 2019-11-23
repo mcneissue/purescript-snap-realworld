@@ -3,7 +3,8 @@ module Main where
 import Prelude
 
 import Affjax as AX
-import Api (Url(..), GetArticlesParams, getArticles)
+import Api (GetArticlesParams, getArticles)
+import Api.Types (Url(..))
 import Control.Monad.Reader (runReaderT)
 import Data.Argonaut as J
 import Data.Either (Either(..))
