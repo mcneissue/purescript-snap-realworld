@@ -24,7 +24,7 @@ getCurrentUser :: forall m r
 getCurrentUser t =
   parseAuthGet (Just t)
     "/users"
-    (readJson' (SProxy :: SProxy "user"))
+    (readJson' _user)
 
 type GetFeedParams =
   { limit :: Maybe Int
@@ -51,6 +51,15 @@ type GetArticlesParams =
   , favorited :: Maybe String
   , limit :: Maybe Int
   , offset :: Maybe Int
+  }
+
+defaultGetArticlesParams :: GetArticlesParams
+defaultGetArticlesParams = 
+  { tag: Nothing
+  , author: Nothing
+  , favorited: Nothing
+  , limit: Nothing
+  , offset: Nothing 
   }
 
 getArticles :: forall m r
@@ -94,7 +103,7 @@ getComments :: forall m r
 getComments slug = 
   parseGet 
     ("/articles/" <> slug <> "/comments") 
-    (readJson' (SProxy :: SProxy "comments"))
+    (readJson' _comments)
 
 deleteComment :: forall m r
                . MonadAsk { apiUrl :: Url | r } m
@@ -116,12 +125,12 @@ getTags :: forall m r
 getTags = 
   parseGet 
     "/tags" 
-    (readJson' (SProxy :: SProxy "tags"))
+    (readJson' _tags)
 
 postLogin :: forall m r
            . MonadAsk { apiUrl :: Url | r } m
           => MonadAff m
-          => { username :: String, password :: String }
+          => { email :: String, password :: String }
           -> m (Either ApiError User)
 postLogin login =
   parsePost
@@ -276,3 +285,9 @@ _offset = SProxy
 
 _comment :: SProxy "comment"
 _comment = SProxy
+
+_comments :: SProxy "comments"
+_comments = SProxy
+
+_tags :: SProxy "tags"
+_tags = SProxy
