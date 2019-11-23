@@ -2,21 +2,35 @@ module Nav where
 
 import Prelude
 
-import Common (cn, href)
+import Common (cn, cns, href)
 import React.Basic (JSX)
 import React.Basic.DOM (a, div, i, li, nav, text, ul)
 import Snap.React.Component ((|-), (|<), (|=))
 
-navItem :: Boolean -> String -> JSX -> JSX
-navItem active href content =
+data NavItemState = Active | Inactive | Disabled
+
+type NavItem = { state :: NavItemState, url :: String, content :: JSX }
+
+navItem :: NavItem -> JSX
+navItem { state, url, content } =
   li
   |= cn "nav-item"
   |- a
-     |= { className, href }
+     |= cns classes
+     |= href url
      |- content
 
   where
-  className = "nav-link" <> if active then " active" else ""
+  classes = ["nav-link"] <> case state of
+    Active -> ["active"]
+    Inactive -> []
+    Disabled -> ["disabled"]
+
+navPills :: Array NavItem -> JSX
+navPills items =
+  ul
+  |= cns ["nav", "nav-pills", "outline-active"]
+  |< map navItem items
 
 navbar :: JSX
 navbar =
@@ -29,9 +43,12 @@ navbar =
           |- text "conduit"
         , ul
           |= cn "nav navbar-nav pull-xs-right"
-          |< [ navItem true "" $ text "Home"
-             , navItem false "" $ i (cn "ion-compose") <> text "&nbsp;New Post"
-             , navItem false "" $ i (cn "ion-gear-a") <> text "&nbsp;Settings"
-             , navItem false "" $ text "Sign up"
-             ]
+          |< map navItem items
         ]
+  where
+  items =
+    [ { state: Active, url: "", content: text "Home" }
+    , { state: Inactive, url: "", content: i (cn "ion-compose") <> text "&nbsp;New Post" }
+    , { state: Inactive, url: "", content: i (cn "ion-gear-a") <> text "&nbsp;Settings" }
+    , { state: Inactive, url: "", content: text "Sign up" }
+    ]
