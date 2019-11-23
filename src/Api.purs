@@ -287,6 +287,18 @@ postArticle token article =
     (Just $ mkJsonBody { article })
     (readJson' _article)
 
+deleteArticle :: forall m r
+               . MonadAsk { apiUrl :: Url | r } m
+              => MonadAff m
+              => Token
+              -> String
+              -> m (Either ApiError Unit)
+deleteArticle token slug = 
+  parseAuthDelete
+    (Just token)
+    ("/articles/" <> slug)
+    (const $ Right unit)
+
 postFavoriteArticle :: forall m r
                      . MonadAsk { apiUrl :: Url | r } m
                     => MonadAff m
