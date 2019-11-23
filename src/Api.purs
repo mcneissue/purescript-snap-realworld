@@ -274,6 +274,18 @@ postFollow token username =
     Nothing
     (readJson' _profile)
 
+deleteFollow :: forall m r
+              . MonadAsk { apiUrl :: Url | r } m
+             => MonadAff m
+             => Token
+             -> String
+             -> m (Either ApiError Unit)
+deleteFollow token username =
+  parseAuthDelete
+    (Just token)
+    ("/profiles/" <> username <> "/follow")
+    (const $ Right unit)
+
 postArticle :: forall m r
              . MonadAsk { apiUrl :: Url | r } m
             => MonadAff m
