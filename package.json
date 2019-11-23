@@ -5,7 +5,8 @@
   "repository": "git@github.com:masaeedu/realworld-starter-kit.git",
   "license": "MIT",
   "devDependencies": {
-    "parcel": "^1.12.4"
+    "parcel": "^1.12.4",
+    "xhr2": "^0.2.0"
   },
   "scripts": {
     "dev": "parcel static/index.html",
