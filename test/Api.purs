@@ -30,8 +30,13 @@ import Type.Equality (class TypeEquals, from)
 
 type EnvVar = { key :: String, value :: String }
 
+type StartServer =
+  { executable :: String
+  , arguments :: Array String
+  }
+
 type Config =
-  { startServer :: String
+  { startServer :: StartServer
   , workingDir :: String
   , apiUrl :: Url
   , cleanup :: String
@@ -64,7 +69,7 @@ readConfig = unsafePartial (fromRight <<< parseConfig) <$> FS.readTextFile UTF8 
 
 startServer :: forall m. MonadAff m => Config -> m ChildProcess
 startServer c = do
-  cp  <- spawnCmd c.workingDir c.envVars c.startServer
+  cp  <- spawnCmd c.workingDir c.envVars c.startServer.executable c.startServer.arguments
   er <- liftAff $ runTestM (awaitServer 20) c
   case er of
     Right _ -> pure cp
@@ -72,7 +77,6 @@ startServer c = do
 
 awaitServer :: Int -> TestM Unit
 awaitServer retry = do
-  -- liftEffect $ log "starting server"
   liftAff $ delay (Milliseconds 100.0)
   void testGetArticles `catchError` 
     \e -> if retry >= 0 
@@ -102,8 +106,8 @@ runCmd_ vs cmd = liftEffect $ void $ CP.execSync cmd opts
     { env = Just $ foldMap (\({ key, value }) -> Object.singleton key value) vs
     }
 
-spawnCmd :: forall m. MonadEffect m => String -> Array EnvVar -> String -> m ChildProcess
-spawnCmd workDir vs cmd = liftEffect $ CP.spawn cmd [] opts
+spawnCmd :: forall m. MonadEffect m => String -> Array EnvVar -> String -> Array String -> m ChildProcess
+spawnCmd workDir vs cmd args = liftEffect $ CP.spawn cmd args opts
   where
   opts = CP.defaultSpawnOptions
     { env = Just $ foldMap (\({ key, value }) -> Object.singleton key value) vs
