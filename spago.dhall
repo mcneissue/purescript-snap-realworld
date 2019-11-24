@@ -5,7 +5,7 @@ You can edit this file as you like.
 { name =
     "my-project"
 , dependencies =
-    [ "effect", "console", "psci-support", "snap" ]
+    [ "effect", "console", "psci-support", "snap", "routing-duplex", "routing" ]
 , packages =
     ./packages.dhall
 , sources =
