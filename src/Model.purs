@@ -33,6 +33,7 @@ maybeThrow e = maybe (throwError e) pure
 newtype Token = Token String
 
 derive instance newtypeToken :: Newtype Token _
+derive newtype instance readForeignToken :: ReadForeign Token
 
 type BaseArticle r = 
   { title :: String
@@ -79,5 +80,5 @@ type BaseUser r =
 
 type UpdateUser = BaseUser (password :: Maybe String)
 
-type User = BaseUser (token :: String)
+type User = BaseUser (token :: Token)
   
