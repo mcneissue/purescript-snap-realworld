@@ -123,14 +123,23 @@ testGetArticles = do
   as <- liftE $ Api.getArticles Api.defaultGetArticlesParams
   pure as
 
-testuser :: { username :: String, email :: String, password :: String }
+type RegisterUser = { username :: String, email :: String, password :: String }
+
+testuser :: RegisterUser
 testuser =
   { username: "testuser"
   , email: "test@test.com"
   , password: "testing123" 
   }
 
-register :: { username :: String, email :: String, password :: String } -> TestM User
+testuser2 :: RegisterUser
+testuser2 =
+  { username: "testuser2"
+  , email: "test2@test.com"
+  , password: "testing123"
+  }
+
+register :: RegisterUser -> TestM User
 register = liftE <<< Api.postRegister
 
 liftE :: forall a. TestM (Either ApiError a) -> TestM a
@@ -159,7 +168,12 @@ apiSpec = around_ withServer do
     describe "User" do
       before (_.token <$> register testuser) do
         it "gets the current user" (void <<< liftE <<< Api.getCurrentUser)
-        it "can update the current user" $ \t -> do
+        it "can update the current user" \t -> do
           _ <- liftE $ Api.putUser t updatedUser
           _ <- login { email: updatedUser.email, password: unsafePartial (fromJust updatedUser.password) }
           pure unit
+    describe "Profile" do
+      before (register testuser2 *> (_.token <$> register testuser)) do
+        it "can follow a profile" \t -> void $ liftE $ Api.postFollow t "testuser2"
+        it "can get a profile" $ const $ void $ liftE $ Api.getProfile "testuser2"
+        it "can unfollow a profile" \t -> void $ liftE $ Api.deleteFollow t "testuser2"
