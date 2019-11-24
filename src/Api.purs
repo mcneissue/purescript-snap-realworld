@@ -23,7 +23,7 @@ getCurrentUser :: forall m r
                -> m (Either ApiError User)
 getCurrentUser t =
   parseAuthGet (Just t)
-    "/users"
+    "/user"
     (readJson' _user)
 
 type GetFeedParams =

@@ -54,7 +54,7 @@ authReq method mcontent mt rf url = do
 
 defaultAuthReq :: Token -> AX.Request Unit
 defaultAuthReq token = AX.defaultRequest 
-  { headers = [ RequestHeader "Token" (unwrap token) ]
+  { headers = [ RequestHeader "Authorization" ("Token " <> unwrap token) ]
   }
 
 parseAuthMethod :: forall m r a
