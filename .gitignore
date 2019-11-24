@@ -11,3 +11,4 @@
 /static/js
 /dist
 /.cache
+/test/config.json
