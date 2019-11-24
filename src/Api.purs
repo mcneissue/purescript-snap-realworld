@@ -257,7 +257,7 @@ putArticle :: forall m r
            => Token
            -> String
            -> UpdateArticle
-           -> m (Either ApiError User)
+           -> m (Either ApiError Article)
 putArticle token slug article =
   parseAuthPut
     (Just token)
