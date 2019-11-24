@@ -3,34 +3,28 @@ module Test.Api where
 import Prelude
 
 import Api as Api
-import Api.Types (ApiError, Url(..))
-import Control.Apply (lift2)
+import Api.Types (ApiError, Url)
 import Control.Monad.Error.Class (class MonadThrow)
-import Control.Monad.Except (ExceptT(..), catchError, except, runExceptT, throwError, class MonadError)
-import Control.Monad.Reader (ReaderT(..), runReaderT, asks, class MonadAsk, ask)
-import Data.Array (length)
+import Control.Monad.Except (class MonadError, ExceptT, catchError, runExceptT, throwError)
+import Control.Monad.Reader (class MonadAsk, ReaderT, ask, asks, runReaderT)
 import Data.Either (Either(..), either, fromRight)
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..), fromJust)
-import Data.Posix.Signal (Signal(..))
 import Data.Posix.Signal as Signal
-import Effect (Effect)
 import Effect.Aff (Aff, Milliseconds(..), bracket, delay, error)
 import Effect.Aff.Class (liftAff, class MonadAff)
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Console (log, logShow)
-import Effect.Exception (Error(..), throwException)
+import Effect.Exception (Error, throwException)
 import Foreign (MultipleErrors)
 import Foreign.Object as Object
-import Model (Article, CreateArticle, Token(..), UpdateUser, User, UpdateArticle)
+import Model (Article, CreateArticle, Token, UpdateArticle, UpdateUser, User)
 import Node.ChildProcess (ChildProcess)
 import Node.ChildProcess as CP
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON as JSON
-import Snap.SYTC.Component (identity)
-import Test.Spec (SpecT(..), around_, before, before_, describe, it)
+import Test.Spec (SpecT, around_, before, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Type.Equality (class TypeEquals, from)
 

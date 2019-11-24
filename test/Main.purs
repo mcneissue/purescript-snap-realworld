@@ -2,17 +2,12 @@ module Test.Main where
 
 import Prelude
 
-import Control.Monad.Error.Class (catchError)
-import Control.Monad.Reader (runReaderT)
-import Data.Either (Either(..), either)
+import Data.Either (either)
 import Effect (Effect)
-import Effect.Aff (Milliseconds(..), delay, launchAff_, Aff)
-import Effect.Aff.Class (liftAff)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Effect.Class.Console (log, logShow)
 import Effect.Exception (throwException)
-import Snap.SYTC.Component (identity)
-import Test.Api (TestM(..), apiSpec, readConfig, runTestM, Config)
+import Test.Api (Config, TestM, apiSpec, readConfig, runTestM)
 import Test.Spec (hoistSpec)
 import Test.Spec.Reporter (consoleReporter)
 import Test.Spec.Runner (defaultConfig, runSpecT)
