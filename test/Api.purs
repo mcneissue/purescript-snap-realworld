@@ -21,7 +21,7 @@ import Effect.Console (log, logShow)
 import Effect.Exception (Error(..), throwException)
 import Foreign (MultipleErrors)
 import Foreign.Object as Object
-import Model (Article, Token(..), UpdateUser, User)
+import Model (Article, CreateArticle, Token(..), UpdateUser, User, UpdateArticle)
 import Node.ChildProcess (ChildProcess)
 import Node.ChildProcess as CP
 import Node.Encoding (Encoding(..))
@@ -29,7 +29,7 @@ import Node.FS.Aff as FS
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON as JSON
 import Snap.SYTC.Component (identity)
-import Test.Spec (SpecT(..), around_, before, describe, it)
+import Test.Spec (SpecT(..), around_, before, before_, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Type.Equality (class TypeEquals, from)
 
@@ -154,6 +154,20 @@ updatedUser =
   , password: Just $ "newpassword123"
   }
 
+testArticle :: CreateArticle
+testArticle =
+  { title: "test"
+  , description: "test"
+  , body: "test"
+  , tagList: ["test", "test2"]
+  }
+
+testArticleUpdate :: UpdateArticle
+testArticleUpdate = testArticle { title = "updated test" }
+
+createArticle :: Token -> TestM Article
+createArticle t = liftE $ Api.postArticle t testArticle
+
 apiSpec :: forall m. Monad m => SpecT TestM Unit m Unit
 apiSpec = around_ withServer do
   describe "API Client" do
@@ -177,3 +191,20 @@ apiSpec = around_ withServer do
         it "can follow a profile" \t -> void $ liftE $ Api.postFollow t "testuser2"
         it "can get a profile" $ const $ void $ liftE $ Api.getProfile "testuser2"
         it "can unfollow a profile" \t -> void $ liftE $ Api.deleteFollow t "testuser2"
+    describe "Articles" do
+      before (_.token <$> register testuser) do
+        it "can create an article" (void <<< createArticle)
+        it "can delete an article" \t -> do
+          a <- createArticle t
+          void $ liftE $ Api.deleteArticle t a.slug
+        it "can update an article" \t -> do
+          a <- createArticle t
+          void $ liftE $ Api.putArticle t a.slug testArticleUpdate
+        it "can get an article list" $ const $ void $ liftE $ Api.getArticles Api.defaultGetArticlesParams
+        it "can get an article feed" \t -> void $ liftE $ Api.getFeed t Api.defaultGetFeedParams
+        it "can favorite/unfavorite an article" \t -> do
+          t2 <- _.token <$> register testuser2
+          a <- createArticle t2
+          void $ liftE $ Api.postFavoriteArticle t a.slug
+          a' <- liftE $ Api.deleteFavoriteArticle t a.slug
+          a'.favorited `shouldEqual` false

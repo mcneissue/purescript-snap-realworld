@@ -31,6 +31,9 @@ type GetFeedParams =
   , offset :: Maybe Int
   }
 
+defaultGetFeedParams :: GetFeedParams
+defaultGetFeedParams = { limit: Nothing, offset: Nothing }
+
 getFeed :: forall m r
          . MonadAsk { apiUrl :: Url | r } m
         => MonadAff m
