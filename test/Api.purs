@@ -4,6 +4,7 @@ import Prelude
 
 import Api as Api
 import Api.Types (ApiError, Url(..))
+import Control.Apply (lift2)
 import Control.Monad.Error.Class (class MonadThrow)
 import Control.Monad.Except (ExceptT(..), catchError, except, runExceptT, throwError, class MonadError)
 import Control.Monad.Reader (ReaderT(..), runReaderT, asks, class MonadAsk, ask)
@@ -208,3 +209,17 @@ apiSpec = around_ withServer do
           void $ liftE $ Api.postFavoriteArticle t a.slug
           a' <- liftE $ Api.deleteFavoriteArticle t a.slug
           a'.favorited `shouldEqual` false
+    describe "Comments" do
+      before commentsSetup do
+        it "can comment on an article" \ctx -> void $ liftE $ Api.postComment ctx.token ctx.slug { body: "foo" }
+        it "can get comments" \ctx -> void $ liftE $ Api.getComments ctx.slug
+        it "can delete a comment" \ctx -> do
+          c <- liftE $ Api.postComment ctx.token ctx.slug { body: "foo" }
+          void $ liftE $ Api.deleteComment ctx.token ctx.slug c.id
+
+commentsSetup :: TestM { token :: Token, slug :: String }
+commentsSetup = do
+  t <- _.token <$> register testuser2
+  slug <- _.slug <$> createArticle t
+  token <- _.token <$> register testuser
+  pure { slug, token }
