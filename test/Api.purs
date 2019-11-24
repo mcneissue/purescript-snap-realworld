@@ -216,6 +216,8 @@ apiSpec = around_ withServer do
         it "can delete a comment" \ctx -> do
           c <- liftE $ Api.postComment ctx.token ctx.slug { body: "foo" }
           void $ liftE $ Api.deleteComment ctx.token ctx.slug c.id
+    describe "Tags" do
+      it "can fetch tags" $ void $ liftE $ Api.getTags
 
 commentsSetup :: TestM { token :: Token, slug :: String }
 commentsSetup = do
