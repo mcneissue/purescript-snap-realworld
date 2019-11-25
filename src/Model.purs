@@ -1,7 +1,8 @@
 module Model where
 
-import Prelude
 import Data.DateTime (DateTime)
+
+type Url = String
 
 type Article =
   { slug :: String
@@ -24,7 +25,7 @@ type Comment =
   , author :: Profile
   }
 
-type Profile = 
+type Profile =
   { username :: String
   , bio :: String
   , image :: String
@@ -38,3 +39,9 @@ type User =
   , bio :: String
   , image :: String
   }
+
+profileUrl :: Profile -> Url
+profileUrl _ = "" -- TODO: Replace with this an actual URL getting thing
+
+articleUrl :: Article -> Url
+articleUrl _ = ""
