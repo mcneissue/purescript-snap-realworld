@@ -13,7 +13,7 @@ type Article =
   , updatedAt :: DateTime
   , favorited :: Boolean
   , favoritesCount :: Int
-  , author :: User
+  , author :: Profile
   }
 
 type Comment =
@@ -21,7 +21,7 @@ type Comment =
   , createdAt :: DateTime
   , updatedAt :: DateTime
   , body :: String
-  , author :: User
+  , author :: Profile
   }
 
 type Profile = 
