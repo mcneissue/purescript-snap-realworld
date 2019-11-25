@@ -1,7 +1,6 @@
 module Settings where
 
-import Auth ((|$))
-import Common (cn, cns)
+import Common (cn, cns, (|$))
 import React.Basic (JSX)
 import React.Basic.DOM (button, div, fieldset, form, h1, input, text, textarea)
 import Snap.React.Component ((|-), (|<), (|=))

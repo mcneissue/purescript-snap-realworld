@@ -2,13 +2,11 @@ module Auth where
 
 import Prelude
 
-import Common (cn, cns, href)
+import Common (cn, cns, href, (|$))
 import Data.Array (foldMap)
 import React.Basic (JSX)
 import React.Basic.DOM (a, button, div, fieldset, form, h1, input, li, p, text, ul)
 import Snap.React.Component ((|-), (|<), (|=))
-
-infixl 7 identity as |$
 
 type Field = { type :: String, placeholder :: String }
 
