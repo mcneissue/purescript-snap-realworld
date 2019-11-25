@@ -18,14 +18,27 @@ articles =
     , date: "January 20th"
     , author: profiles.eric
     , url: ""
+    , body: "\
+            \<p>\
+            \  Web development technologies have evolved at an incredible clip\
+            \  over the past few years.\
+            \</p>\
+            \<h2 id=\"introducing-ionic\">Introducing RealWorld.</h2>\
+            \<p>It's a great solution for learning how other frameworks work.</p>\
+            "
     }
 
   , { title: "The song you won't ever stop singing. No matter how hard you try"
-    , description: "This is the description for the post" 
+    , description: "This is the description for the post"
     , hearts: 32
     , date: "January 20th"
     , author: profiles.albert
     , url: ""
+    , body: "\
+            \<p>\
+            \  Look at me I am say things too\
+            \</p>\
+            "
     }
   ]
 

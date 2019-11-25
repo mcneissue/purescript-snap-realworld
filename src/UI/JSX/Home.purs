@@ -6,7 +6,7 @@ import Article (articlePreview)
 import Common (cn, cns, href)
 import Nav (NavItemState(..), navPills)
 import React.Basic (JSX)
-import React.Basic.DOM (a, div, h1, li, p, text, ul)
+import React.Basic.DOM (a, div, h1, p, text)
 import Snap.React.Component ((|-), (|<), (|=))
 import Types (Article, Tag)
 
