@@ -1,6 +1,6 @@
 module Auth where
 
-import Prelude
+import Prelude hiding (div)
 
 import Common (cn, cns, href, (|$))
 import Data.Array (foldMap)
@@ -31,7 +31,7 @@ loginForm fs =
 
 fields :: Array Field
 fields =
-  [ { type: "text", placeholder: "Your Name" }
+  [ { type: "text", placeholder: "Username" }
   , { type: "text", placeholder: "Email" }
   , { type: "password", placeholder: "Password" }
   ]

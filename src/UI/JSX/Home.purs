@@ -4,13 +4,16 @@ import Prelude hiding (div)
 
 import Article (articlePreview)
 import Common (cn, cns, href)
+import Model (Article)
 import Nav (NavItemState(..), navPills)
 import React.Basic (JSX)
 import React.Basic.DOM (a, div, h1, p, text)
 import Snap.React.Component ((|-), (|<), (|=))
-import Types (Article, Tag)
 
-type HomePageData = { articles :: Array Article, tags :: Array Tag }
+type HomePage =
+  { articles :: Array Article
+  , tagList :: Array String
+  }
 
 banner :: JSX
 banner =
@@ -31,21 +34,21 @@ feedToggle =
      , { state: Active, url: "", content: text "Global Feed" }
      ]
 
-tagPill :: Tag -> JSX
+tagPill :: String -> JSX
 tagPill tag =
   a
   |= cns ["tag-pill", "tag-default"]
-  |= href tag.url
-  |- text tag.name
+  |= href "" -- TODO: Figure out what the point of this empty href is (it's there on demo.realworld.io too)
+  |- text tag
 
-tagList :: Array Tag -> JSX
+tagList :: Array String -> JSX
 tagList ts =
   div
   |= cn "tag-list"
   |< map tagPill ts
 
-container :: HomePageData -> JSX
-container hpd =
+container :: HomePage -> JSX
+container h =
   div
   |= cns ["container", "page"]
   |- div
@@ -54,14 +57,14 @@ container hpd =
         |= cn "col-md-9"
         |< join
            [ [feedToggle]
-           , map articlePreview hpd.articles
-           , [tagList hpd.tags]
+           , map articlePreview h.articles
+           , [tagList h.tagList]
            ]
 
-home :: HomePageData -> JSX
-home hpd =
+home :: HomePage -> JSX
+home h =
   div
   |= cn "home-page"
   |< [ banner
-     , container hpd
+     , container h
      ]

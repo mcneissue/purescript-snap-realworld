@@ -2,22 +2,36 @@ module FakeData where
 
 import Prelude
 
-import Types (Article, Profile, Tag)
+import Data.Date (Date, Month(..), exactDate)
+import Data.DateTime (DateTime(..), Time)
+import Data.Enum (toEnum)
+import Data.Maybe (Maybe)
+import Model (Profile, Article)
+import Unsafe.Coerce (unsafeCoerce)
 
 profiles :: { eric :: Profile, albert :: Profile }
 profiles =
-  { eric:   { url: "", picture: "http://i.imgur.com/Qr71crq.jpg", name: "Eric Simons" }
-  , albert: { url: "", picture: "http://i.imgur.com/N4VcUeJ.jpg", name: "Albert Pai" }
+  { eric:   { image: "http://i.imgur.com/Qr71crq.jpg", username: "Eric Simons", bio: "", following: true }
+  , albert: { image: "http://i.imgur.com/N4VcUeJ.jpg", username: "Albert Pai", bio: "", following: false }
   }
+
+fromMaybe :: forall a. Maybe a -> a
+fromMaybe = unsafeCoerce
+
+jan20 :: Date
+jan20 = fromMaybe $ do
+  y <- toEnum 2019
+  d <- toEnum 20
+  exactDate y January d
+
+midnight :: Time
+midnight = bottom
 
 articles :: Array Article
 articles =
-  [ { title: "How to build webapps that scale"
+  [ { slug: "article-1"
+    , title: "How to build webapps that scale"
     , description: "This is the description for the post."
-    , hearts: 29
-    , date: "January 20th"
-    , author: profiles.eric
-    , url: ""
     , body: "\
             \<p>\
             \  Web development technologies have evolved at an incredible clip\
@@ -26,21 +40,30 @@ articles =
             \<h2 id=\"introducing-ionic\">Introducing RealWorld.</h2>\
             \<p>It's a great solution for learning how other frameworks work.</p>\
             "
+    , tagList: []
+    , createdAt: DateTime jan20 midnight
+    , updatedAt: DateTime jan20 midnight
+    , favorited: true
+    , favoritesCount: 29
+    , author: profiles.eric
     }
 
-  , { title: "The song you won't ever stop singing. No matter how hard you try"
+  , { slug: "article-2"
+    , title: "The song you won't ever stop singing. No matter how hard you try"
     , description: "This is the description for the post"
-    , hearts: 32
-    , date: "January 20th"
-    , author: profiles.albert
-    , url: ""
     , body: "\
             \<p>\
             \  Look at me I am say things too\
             \</p>\
             "
+    , tagList: []
+    , createdAt: DateTime jan20 midnight
+    , updatedAt: DateTime jan20 midnight
+    , favorited: false
+    , favoritesCount: 32
+    , author: profiles.albert
     }
   ]
 
-tags :: Array Tag
-tags = { url: "", name: _ } <$> ["programming", "javascript", "emberjs", "angularjs", "react", "mean", "node", "rails"]
+tagList :: Array String
+tagList = ["programming", "javascript", "emberjs", "angularjs", "react", "mean", "node", "rails"]

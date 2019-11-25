@@ -4,14 +4,14 @@ import Prelude hiding (div)
 
 import Article (articlePreview)
 import Common (cn, cns, (|$))
-import FakeData (articles)
+import Model (Profile, Article)
 import Nav (NavItemState(..), navPills)
 import React.Basic (JSX)
 import React.Basic.DOM (button, div, h4, i, img, p, text)
 import Snap.React.Component ((|-), (|<), (|=))
 
-userInfo :: JSX
-userInfo =
+userInfo :: Profile -> JSX
+userInfo profile =
   div
   |= cn "user-info"
   |- div
@@ -22,14 +22,14 @@ userInfo =
            |= cns ["col-xs-12", "col-md-10", "offset-md-1"]
            |< [ img
                 |= cn "user-img"
-                |$ { src: "http://i.imgur.com/Qr71crq.jpg" }
+                |$ { src: profile.image }
               , h4
-                |- text "Eric Simons"
+                |- text profile.username
               , p
-                |- text "Cofounder @GoThinkster, lived in Aol's HQ for a few months,\nkinda looks like Peeta from the Hunger Games"
+                |- text profile.bio
               , button
                 |= cns ["btn", "btn-sm", "btn-outline-secondary", "action-btn"]
-                |- (i (cn "ion-plus-round") <> text "&nbsp; Follow Eric Simons")
+                |- i (cn "ion-plus-round") <> text ("&nbsp; Follow " <> profile.username)
               ]
 
 articlesToggle :: JSX
@@ -41,8 +41,8 @@ articlesToggle =
      , { state: Inactive, url: "", content: text "Favorited Articles" }
      ]
 
-container :: JSX
-container =
+profileArticles :: Array Article -> JSX
+profileArticles articles =
   div
   |= cn "container"
   |- div
@@ -55,10 +55,12 @@ container =
   articlePreviews =
     map articlePreview articles
 
-profilePage :: JSX
-profilePage =
+type ProfilePage = { authored :: Array Article, favorited :: Array Article, profile :: Profile  }
+
+profilePage :: ProfilePage -> JSX
+profilePage pp =
   div
   |= cn "profile-page"
-  |< [ userInfo
-     , container
+  |< [ userInfo pp.profile
+     , profileArticles pp.authored
      ]

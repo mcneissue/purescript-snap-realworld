@@ -1,35 +1,34 @@
 module Article where
 
-import Prelude
+import Prelude hiding (div)
 
 import Common (cn, cns, href, (|$))
 import Data.Array (foldMap)
-import Data.DateTime (DateTime(..))
+import Model (Article, Comment, Profile, articleUrl, profileUrl)
 import React.Basic (JSX)
 import React.Basic.DOM (a, button, div, form, h1, hr, i, img, p, span, text, textarea)
 import Snap.React.Component ((|-), (|<), (|=))
-import Types (Article, Profile, Comment)
 
 articleMeta :: Article -> Array JSX -> JSX
-articleMeta article buttons =
+articleMeta article btns =
   div
   |= cn "article-meta"
-  |< (metaContent <> buttons)
+  |< (metaContent <> btns)
 
   where
   metaContent =
     [ a
-      |= href article.author.url
-      |- img { src: article.author.picture }
+      |= href (profileUrl article.author)
+      |- img { src: article.author.image }
     , div
       |= cn "info"
       |< [ a
            |= cn "author"
-           |= href article.author.url
-           |- text article.author.name
+           |= href (profileUrl article.author)
+           |- text article.author.username
          , span
            |= cn "date"
-           |- text article.date
+           |- text (show article.createdAt)
          ]
     ]
 
@@ -37,41 +36,40 @@ articlePreview :: Article -> JSX
 articlePreview article =
   div
   |= cn "article-preview"
-  |< [ articleMeta article buttons
+  |< [ articleMeta article btns
      , a
        |= cn "preview-link"
-       |= href article.url
+       |= href (articleUrl article)
        |< [ h1 |- text article.title
           , p |- text article.description
           , span |- text "Read more..."
           ]
      ]
   where
-  buttons = [fave]
+  btns = [fave]
   fave =
     button
     |= cns ["btn", "btn-sm", "btn-outline-primary", "pull-xs-right"]
-    |- i (cn "ion-heart") <> text (show article.hearts)
+    |- i (cn "ion-heart") <> text (show article.favoritesCount)
 
-buttons :: Article -> Array JSX
-buttons article = [follow, spacer, fave]
-  where
-  spacer = text "&nbsp;&nbsp;"
-  follow =
-    button
-    |= cns ["btn", "btn-sm", "btn-outline-secondary"]
-    |< [ i |$ cn "ion-plus-round"
-       , text ("&nbsp; Follow " <> article.author.name)
-       ]
-  fave =
-    button
-    |= cns ["btn", "btn-sm", "btn-outline-primary"]
-    |< [ i |$ cn "ion-heart"
-       , text "&nbsp; Favorite Post "
-       , span
-         |= cn "counter"
-         |- text ("(" <> show article.hearts <> ")")
-       ]
+followButton :: Profile -> JSX
+followButton p =
+  button
+  |= cns ["btn", "btn-sm", "btn-outline-secondary"]
+  |< [ i |$ cn "ion-plus-round"
+     , text ("&nbsp; Follow " <> p.username)
+     ]
+
+favoriteButton :: Article -> JSX
+favoriteButton a =
+  button
+  |= cns ["btn", "btn-sm", "btn-outline-primary"]
+  |< [ i |$ cn "ion-heart"
+     , text "&nbsp; Favorite Post "
+     , span
+       |= cn "counter"
+       |- text ("(" <> show a.favoritesCount <> ")")
+     ]
 
 banner :: Article -> JSX
 banner article =
@@ -80,7 +78,12 @@ banner article =
   |- div
      |= cn "container"
      |< [ h1 |- text "How to build webapps that scale"
-        , articleMeta article (buttons article)
+        , articleMeta
+            article
+            [ followButton article.author
+            , text "&nbsp;&nbsp;"
+            , favoriteButton article
+            ]
         ]
 
 articleContent :: Article -> JSX
@@ -95,7 +98,12 @@ articleActions :: Article -> JSX
 articleActions article =
   div
   |= cns ["article-actions"]
-  |- articleMeta article (buttons article)
+  |- articleMeta
+       article
+       [ followButton article.author
+       , text "&nbsp;&nbsp;"
+       , favoriteButton article
+       ]
 
 commentForm :: JSX
 commentForm =
@@ -130,10 +138,10 @@ comment c =
        |= cn "card-footer"
        |< [ a
             |= cn "comment-author"
-            |= href c.author.url
+            |= href (profileUrl c.author)
             |- img
                |= cn "comment-author-img"
-               |$ { src: c.author.picture }
+               |$ { src: c.author.image }
           ]
      ]
 
@@ -145,7 +153,11 @@ commentSection cs =
      |= cns ["col-xs-12", "col-md-8", "offset-md-2"]
      |- commentForm <> foldMap comment cs
 
-type ArticlePage = { article :: Article, comments :: Array Comment }
+type ArticlePage =
+  { article :: Article
+  , comments :: Array Comment
+  }
+
 articlePage :: ArticlePage -> JSX
 articlePage s =
   div
